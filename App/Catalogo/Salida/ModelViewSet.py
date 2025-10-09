@@ -1,46 +1,40 @@
-from rest_framework.viewsets import ModelViewSet
-from .models import  Salida
-from .Serializer import SalidaSerialize, SalidaDetalleSerialize
-
-from django.db import transaction
-from rest_framework.viewsets import ModelViewSet
-
-from .Serializer import *
-
-from django.shortcuts import get_object_or_404
-from rest_framework.views import APIView
-from rest_framework import status, viewsets
-from drf_yasg.utils import swagger_auto_schema
-from .models import *
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from drf_yasg.utils import swagger_auto_schema
+from django.db import transaction
+from .models import Salida, DetalleSalida
+from .Serializer import SalidaSerialize, DetalleSalidaSerialize
+
 
 class SalidaViewSet(viewsets.ModelViewSet):
-    queryset = Salida.objects.all()
-    serializer_class = SalidaDetalleSerialize()
+    queryset = Salida.objects.all().order_by('-id')
+    serializer_class = SalidaSerialize
+    permission_classes = [AllowAny]
 
-    @swagger_auto_schema(request_body=SalidaDetalleSerialize)
+    @swagger_auto_schema(request_body=SalidaSerialize)
     def create(self, request, *args, **kwargs):
-        serializer = SalidaDetalleSerialize(data=request.data)
-
+        serializer = SalidaSerialize(data=request.data)
         if serializer.is_valid():
             try:
                 with transaction.atomic():
-                    # Guarda la entrada
-                    salida_data = serializer.validated_data['salida']
-                    salida = Salida.objects.create(**salida_data)
+                    # Guardar la salida principal
+                    salida = serializer.save()
 
-                    # Guarda cada detalle asociado
-                    detalles_data = serializer.validated_data['detallesalida']
-                    for detalle_data in detalles_data:
-                        detalle_data['salida'] = salida  # Asocia el detalle a la entrada creada
-                        DetalleSalida.objects.create(**detalle_data)
+                    # Guardar los detalles si vienen
+                    detalles = request.data.get('detalles', [])
+                    for det in detalles:
+                        det['salida'] = salida.id
+                        detalle_serializer = DetalleSalidaSerialize(data=det)
+                        detalle_serializer.is_valid(raise_exception=True)
+                        detalle_serializer.save()  # Aquí se resta la existencia automáticamente
 
-                    # Responde con los datos creados
+                    # Respuesta final
                     response_data = {
                         "salida": SalidaSerialize(salida).data,
-                        "detallesalida": DetalleSalidaSerialize(DetalleSalida.objects.filter(salida=salida),
-                                                                  many=True).data
+                        "detalles": DetalleSalidaSerialize(
+                            DetalleSalida.objects.filter(salida=salida), many=True
+                        ).data
                     }
                     return Response(response_data, status=status.HTTP_201_CREATED)
 
@@ -48,6 +42,21 @@ class SalidaViewSet(viewsets.ModelViewSet):
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DetalleSalidaViewSet(viewsets.ModelViewSet):
+    queryset = DetalleSalida.objects.all()
+    serializer_class = DetalleSalidaSerialize
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            data=request.data, many=isinstance(request.data, list)
+        )
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 
 

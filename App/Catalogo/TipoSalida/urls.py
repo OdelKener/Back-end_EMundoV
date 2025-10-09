@@ -7,7 +7,7 @@ from .ModelViewSet import TipoSalidaViewSet
 from .models import TipoSalida
 
 router = DefaultRouter()
-router.register(r'tiposalida',TipoSalidaViewSet, basename='tiposalida')
+router.register(r'tiposalida',TipoSalidaViewSet, basename='Tiposalida')
 
 urlpatterns = [
 

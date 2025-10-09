@@ -1,6 +1,6 @@
 from django.urls import path,include
 from rest_framework.routers import  DefaultRouter
-from .views import  CategoriaViewSet
+from .ModelViewSet import  CategoriaViewSet
 from .ApiView import *
 
 
@@ -13,9 +13,3 @@ urlpatterns = [
 
 ]
 
-# app_name ="categoria"
-#
-# urlpatterns=[
-#
-#     path('',CategoriaApiView.as_view(), name="categoria"),
-# ]

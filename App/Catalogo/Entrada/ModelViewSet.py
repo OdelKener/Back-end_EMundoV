@@ -1,51 +1,62 @@
-from django.db import transaction
-from rest_framework.viewsets import ModelViewSet
-from .models import  Entrada
-from .Serializer import *
-
-from django.shortcuts import get_object_or_404
-from rest_framework.views import APIView
-from rest_framework import status, viewsets
-from drf_yasg.utils import swagger_auto_schema
-from .models import *
-
+from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from drf_yasg.utils import swagger_auto_schema
+from django.db import transaction
+from .models import Entrada, DetalleEntrada
+from .Serializer import EntradaSerialize, DetalleEntradaSerialize
 
 
 class EntradaViewSet(viewsets.ModelViewSet):
-   queryset = Entrada.objects.all()
-   serializer_class = EntradaDetalleSerialize()
+    queryset = Entrada.objects.all().order_by('-id')  # Evita el warning de queryset sin orden
+    serializer_class = EntradaSerialize
+    permission_classes = [AllowAny]
 
-   @swagger_auto_schema(request_body=EntradaDetalleSerialize)
-   def create(self, request, *args, **kwargs):
-      serializer = EntradaDetalleSerialize(data=request.data)
+    @swagger_auto_schema(request_body=EntradaSerialize)
+    def create(self, request, *args, **kwargs):
+        serializer = EntradaSerialize(data=request.data)
+        if serializer.is_valid():
+            try:
+                with transaction.atomic():
+                    # Guardar la entrada principal
+                    entrada = serializer.save()
 
-      if serializer.is_valid():
-         try:
-            with transaction.atomic():
-               # Guarda la entrada
-               entrada_data = serializer.validated_data['entrada']
-               entrada = Entrada.objects.create(**entrada_data)
+                    # Guardar los detalles si vienen
+                    detalles = request.data.get('detalles', [])
+                    for det in detalles:
+                        det['entrada'] = entrada.id
+                        detalle_serializer = DetalleEntradaSerialize(data=det)
+                        detalle_serializer.is_valid(raise_exception=True)
+                        detalle_serializer.save()  # Aquí se suma la existencia automáticamente
 
-               # Guarda cada detalle asociado
-               detalles_data = serializer.validated_data['detalleentrada']
-               for detalle_data in detalles_data:
-                  detalle_data['entrada'] = entrada  # Asocia el detalle a la entrada creada
-                  DetalleEntrada.objects.create(**detalle_data)
+                    # Respuesta final con los datos creados
+                    response_data = {
+                        "entrada": EntradaSerialize(entrada).data,
+                        "detalles": DetalleEntradaSerialize(
+                            DetalleEntrada.objects.filter(entrada=entrada), many=True
+                        ).data
+                    }
+                    return Response(response_data, status=status.HTTP_201_CREATED)
 
-               # Responde con los datos creados
-               response_data = {
-                  "entrada": EntradaSerialize(entrada).data,
-                  "detalleentrada": DetalleEntradaSerialize(DetalleEntrada.objects.filter(entrada=entrada),
-                                                            many=True).data
-               }
-               return Response(response_data, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-      return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class DetalleEntradaViewSet(viewsets.ModelViewSet):
+    queryset = DetalleEntrada.objects.all()
+    serializer_class = DetalleEntradaSerialize
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            data=request.data, 
+            many=isinstance(request.data, list)
+        )
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
  #   queryset = EntradaDetalle.objects.all()

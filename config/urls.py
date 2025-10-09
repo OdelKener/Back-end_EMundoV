@@ -49,6 +49,6 @@ urlpatterns = [
 
 
     path('InventarioLibros/', include('App.InventarioLibros.Urls')),
-    path('Seguridad/', include('App.Seguridad.Usuario.urls')),
+    path('Seguridad/', include('App.Seguridad.urls')),
 
 ]

@@ -30,32 +30,36 @@ class Entrada(models.Model):
         return f'{self.tipoentrada}-{self.sucursalid}-{self.sucursalidhon}-{self.sucursalidcos}-{self.sucursalidpan}'
 
 class DetalleEntrada(models.Model):
-
- costoactual = models.BigIntegerField(verbose_name='CostoActual', null=True, blank=True)
- cantidad= models.BigIntegerField(verbose_name='Cantidad', null=True, blank=True)
- entrada = models.ForeignKey(Entrada, verbose_name='Entrada', on_delete=models.PROTECT)
- libro = models.ForeignKey(Libro,verbose_name='Libro', on_delete=models.PROTECT,null=True, blank=True)
- librocos = models.ForeignKey(LibrosCos, verbose_name='LibroCos', on_delete=models.PROTECT, null=True, blank=True)
- librohon = models.ForeignKey(LibrosHon, verbose_name='LibroHon', on_delete=models.PROTECT, null=True, blank=True)
- libropan = models.ForeignKey(LibrosPan, verbose_name='LibroPan', on_delete=models.PROTECT, null=True, blank=True)
-
-
- class Meta:
-    verbose_name = 'DetallesEntradas'
-
-
- def __str__(self):
-    return f'{self.entrada}-{self.libro}-{self.librocos}-{self.librohon}-{self.libropan}-{self.costoactual}-{self.cantidad}-'
-
-class EntradaDetalle (models.Model):
-    entrada =Entrada()
-    detalleentrada= DetalleEntrada()
+    costoactual = models.BigIntegerField(verbose_name='CostoActual', null=True, blank=True)
+    cantidad = models.BigIntegerField(verbose_name='Cantidad', null=True, blank=True)
+    entrada = models.ForeignKey(Entrada, verbose_name='Entrada', on_delete=models.PROTECT)
+    libro = models.ForeignKey(Libro, verbose_name='Libro', on_delete=models.PROTECT, null=True, blank=True)
+    librocos = models.ForeignKey(LibrosCos, verbose_name='LibroCos', on_delete=models.PROTECT, null=True, blank=True)
+    librohon = models.ForeignKey(LibrosHon, verbose_name='LibroHon', on_delete=models.PROTECT, null=True, blank=True)
+    libropan = models.ForeignKey(LibrosPan, verbose_name='LibroPan', on_delete=models.PROTECT, null=True, blank=True)
 
     class Meta:
-        verbose_name= 'EntradasDetalles'
+        verbose_name = 'DetallesEntradas'
+
+    def save(self, *args, **kwargs):
+        if not self.pk and self.libro and self.cantidad:
+            self.libro.existencia = (self.libro.existencia or 0) + self.cantidad
+            self.libro.save()
+        super().save(*args, **kwargs)
 
     def __str__(self):
-            return f'{self.entrada}-{self.detalleentrada}'
+        return f'{self.entrada}-{self.libro}-{self.librocos}-{self.librohon}-{self.libropan}-{self.costoactual}-{self.cantidad}'
+
+
+class EntradaDetalle(models.Model):
+    entrada = models.ForeignKey(Entrada, on_delete=models.CASCADE, related_name='detalles')
+    detalleentrada = models.ForeignKey(DetalleEntrada, on_delete=models.CASCADE, related_name='entrada_detalle')
+
+    class Meta:
+        verbose_name = 'EntradasDetalles'
+
+    def __str__(self):
+        return f'{self.entrada} - {self.detalleentrada}'
 
 
 

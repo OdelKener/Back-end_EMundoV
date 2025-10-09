@@ -7,7 +7,7 @@ from .ModelViewSet import TipoEntradaViewSet
 from .models import TipoEntrada
 
 router = DefaultRouter()
-router.register(r'tipoentrada',TipoEntradaViewSet, basename='tipoentrada')
+router.register(r'tipoentrada',TipoEntradaViewSet, basename='Tipoentrada')
 
 urlpatterns = [
 

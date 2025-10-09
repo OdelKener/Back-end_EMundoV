@@ -3,12 +3,13 @@ from rest_framework.routers import  DefaultRouter
 
 
 from .ApiView import EntradaApiView
-from .ModelViewSet import EntradaViewSet
+from .ModelViewSet import EntradaViewSet, DetalleEntradaViewSet
 
 from .models import Entrada
 
 router = DefaultRouter()
 router.register(r'entrada',EntradaViewSet, basename='entrada')
+router.register(r'detalleentrada', DetalleEntradaViewSet, basename='detalleentrada')
 
 
 
