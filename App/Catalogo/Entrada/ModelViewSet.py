@@ -1,47 +1,30 @@
 from rest_framework import viewsets, status
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from drf_yasg.utils import swagger_auto_schema
+from rest_framework.response import Response
 from django.db import transaction
 from .models import Entrada, DetalleEntrada
 from .Serializer import EntradaSerialize, DetalleEntradaSerialize
 
-
 class EntradaViewSet(viewsets.ModelViewSet):
-    queryset = Entrada.objects.all().order_by('-id')  # Evita el warning de queryset sin orden
+    queryset = Entrada.objects.all().order_by('-id')
     serializer_class = EntradaSerialize
     permission_classes = [AllowAny]
 
-    @swagger_auto_schema(request_body=EntradaSerialize)
     def create(self, request, *args, **kwargs):
-        serializer = EntradaSerialize(data=request.data)
-        if serializer.is_valid():
-            try:
-                with transaction.atomic():
-                    # Guardar la entrada principal
-                    entrada = serializer.save()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-                    # Guardar los detalles si vienen
-                    detalles = request.data.get('detalles', [])
-                    for det in detalles:
-                        det['entrada'] = entrada.id
-                        detalle_serializer = DetalleEntradaSerialize(data=det)
-                        detalle_serializer.is_valid(raise_exception=True)
-                        detalle_serializer.save()  # Aquí se suma la existencia automáticamente
+        try:
+            with transaction.atomic():
+                entrada = serializer.save()
+                # Respuesta final con entrada y sus detalles
+                return Response(
+                    EntradaSerialize(entrada).data,
+                    status=status.HTTP_201_CREATED
+                )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-                    # Respuesta final con los datos creados
-                    response_data = {
-                        "entrada": EntradaSerialize(entrada).data,
-                        "detalles": DetalleEntradaSerialize(
-                            DetalleEntrada.objects.filter(entrada=entrada), many=True
-                        ).data
-                    }
-                    return Response(response_data, status=status.HTTP_201_CREATED)
-
-            except Exception as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DetalleEntradaViewSet(viewsets.ModelViewSet):

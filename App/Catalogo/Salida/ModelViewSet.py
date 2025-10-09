@@ -12,36 +12,15 @@ class SalidaViewSet(viewsets.ModelViewSet):
     serializer_class = SalidaSerialize
     permission_classes = [AllowAny]
 
-    @swagger_auto_schema(request_body=SalidaSerialize)
     def create(self, request, *args, **kwargs):
-        serializer = SalidaSerialize(data=request.data)
-        if serializer.is_valid():
-            try:
-                with transaction.atomic():
-                    # Guardar la salida principal
-                    salida = serializer.save()
-
-                    # Guardar los detalles si vienen
-                    detalles = request.data.get('detalles', [])
-                    for det in detalles:
-                        det['salida'] = salida.id
-                        detalle_serializer = DetalleSalidaSerialize(data=det)
-                        detalle_serializer.is_valid(raise_exception=True)
-                        detalle_serializer.save()  # Aquí se resta la existencia automáticamente
-
-                    # Respuesta final
-                    response_data = {
-                        "salida": SalidaSerialize(salida).data,
-                        "detalles": DetalleSalidaSerialize(
-                            DetalleSalida.objects.filter(salida=salida), many=True
-                        ).data
-                    }
-                    return Response(response_data, status=status.HTTP_201_CREATED)
-
-            except Exception as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            with transaction.atomic():
+                salida = serializer.save()
+                return Response(SalidaSerialize(salida).data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DetalleSalidaViewSet(viewsets.ModelViewSet):
@@ -51,11 +30,13 @@ class DetalleSalidaViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(
-            data=request.data, many=isinstance(request.data, list)
+         data=request.data, 
+            many=isinstance(request.data, list)
         )
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 
 

@@ -1,20 +1,36 @@
-from  rest_framework.serializers import  ModelSerializer
-from  App.Catalogo.Entrada.models import Entrada
-from .models import *
+from rest_framework import serializers
+from .models import Entrada, DetalleEntrada
+from App.InventarioLibros.Libros.models import Libro
 
-class EntradaSerialize(ModelSerializer):
-    class Meta:
-        model = Entrada
-        fields = [ 'fechaentrada','tipoentrada_id','sucursalid_id','sucursalidhon_id','sucursalidcos_id','sucursalidpan_id',]
-
-class DetalleEntradaSerialize(ModelSerializer):
+class DetalleEntradaSerialize(serializers.ModelSerializer):
     class Meta:
         model = DetalleEntrada
-        fields = ['entrada_id','libro_id','librohon_id','librocos_id','libropan_id','cantidad','costoactual']
+        # CORREGIR: Usar los nombres correctos del modelo
+        fields = ['entrada', 'libro', 'librohon', 'librocos', 'libropan', 'cantidad', 'costoactual']
 
-class EntradaDetalleSerialize(ModelSerializer):
-    entrada=EntradaSerialize()
-    detalleentrada=DetalleEntradaSerialize(many=True)
+    def create(self, validated_data):
+        detalle = super().create(validated_data)
+
+        # CORREGIR: Usar 'libro' en lugar de 'libro_id'
+        libro = None
+        if detalle.libro:  # 'libro' es el objeto, no 'libro_id'
+            libro = detalle.libro
+        if libro:
+            libro.existencia = (libro.existencia or 0) + detalle.cantidad
+            libro.costoactual = detalle.costoactual
+            libro.save()
+        return detalle
+
+class EntradaSerialize(serializers.ModelSerializer):
     class Meta:
         model = Entrada
-        fields =['entrada','detalleentrada']
+        fields = [
+            'id',
+            'fechaentrada',
+            'tipoentrada_id',
+            'sucursalid_id',
+            'sucursalidhon_id',
+            'sucursalidcos_id',
+            'sucursalidpan_id',
+        ]
+        read_only_fields = ['id']
