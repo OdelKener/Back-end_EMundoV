@@ -13,7 +13,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'mssql',  # Utilizamos el backend mssql-django
         'NAME': 'EdicionesMundoInvIntegral ',  # Nombre de la base de datos
-        'HOST': 'KABRONKTOM\MSSQLSERVER300',  # IP del servidor SQL Server
+        'HOST': 'KABRONKTOM\\MSSQLSERVER300',  # IP del servidor SQL Server
 
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',  # Driver ODBC instalado
