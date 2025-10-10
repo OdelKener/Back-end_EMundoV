@@ -7,13 +7,13 @@ ALLOWED_HOSTS = [
     '127.0.0.1', 
     'localhost',
     '.ngrok-free.app',
-    '7d89e4af5064.ngrok-free.app',
+    '6fb5146f8196.ngrok-free.app',
     'localhost:8000',  # ← AGREGAR ESTO
 ]
 
 # CSRF TRUSTED ORIGINS (ACTUALIZADO)
 CSRF_TRUSTED_ORIGINS = [
-    'https://7d89e4af5064.ngrok-free.app',
+    'https://6fb5146f8196.ngrok-free.app',
     'https://*.ngrok-free.app',
     'http://localhost:8000',  # ← AGREGAR ESTO
     'http://127.0.0.1:8000',  # ← AGREGAR ESTO
@@ -21,7 +21,7 @@ CSRF_TRUSTED_ORIGINS = [
 
 # CORS CONFIGURATION (ACTUALIZADO)
 CORS_ALLOWED_ORIGINS = [
-    "https://7d89e4af5064.ngrok-free.app",
+    "https://6fb5146f8196.ngrok-free.app",
     "https://interfazweb-emundo-v.netlify.app",
     "http://localhost:8000",  # ← AGREGAR ESTO
     "http://127.0.0.1:8000",  # ← AGREGAR ESTO
