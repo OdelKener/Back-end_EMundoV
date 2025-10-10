@@ -1,57 +1,64 @@
-from .base import*
-from decouple import  config
-
-
-from config.utils.Logging_config import ANSIColorFormatter
-
-
+from .base import *
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+# ALLOWED_HOSTS - MÁS FLEXIBLE PARA NGROK
+ALLOWED_HOSTS = [
+    '127.0.0.1', 
+    'localhost',
+    '.ngrok-free.app',
+    '7d89e4af5064.ngrok-free.app',
+    'localhost:8000',  # ← AGREGAR ESTO
+]
+
+# CSRF TRUSTED ORIGINS (ACTUALIZADO)
+CSRF_TRUSTED_ORIGINS = [
+    'https://7d89e4af5064.ngrok-free.app',
+    'https://*.ngrok-free.app',
+    'http://localhost:8000',  # ← AGREGAR ESTO
+    'http://127.0.0.1:8000',  # ← AGREGAR ESTO
+]
+
+# CORS CONFIGURATION (ACTUALIZADO)
+CORS_ALLOWED_ORIGINS = [
+    "https://7d89e4af5064.ngrok-free.app",
+    "https://interfazweb-emundo-v.netlify.app",
+    "http://localhost:8000",  # ← AGREGAR ESTO
+    "http://127.0.0.1:8000",  # ← AGREGAR ESTO
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+# CORS ADDITIONAL SETTINGS (NUEVO)
+CORS_ALLOW_ALL_ORIGINS = True  # Solo para desarrollo
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# SESSION AND CSRF COOKIE (NUEVO)
+CSRF_COOKIE_SECURE = False  # False para desarrollo
+SESSION_COOKIE_SECURE = False  # False para desarrollo
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# Tu configuración de base de datos...
 DATABASES = {
     'default': {
-        'ENGINE': 'mssql',  # Utilizamos el backend mssql-django
-        'NAME': 'EdicionesMundoInvIntegral ',  # Nombre de la base de datos
-        'HOST': 'KABRONKTOM\\MSSQLSERVER300',  # IP del servidor SQL Server
-
+        'ENGINE': 'mssql',
+        'NAME': 'EdicionesMundoInvIntegral',
+        'HOST': 'KABRONKTOM\\MSSQLSERVER300',
         'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',  # Driver ODBC instalado
-            'trusted_connection': 'yes',  # Habilita la autenticación de Windows
-            'extra_params': 'TrustServerCertificate=yes',  # Útil si estás usando SSL sin un certificado de confianza
+            'driver': 'ODBC Driver 17 for SQL Server',
+            'trusted_connection': 'yes',
+            'extra_params': 'TrustServerCertificate=yes',
         },
     }
 }
-
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'custom_format': {
-            '()': ANSIColorFormatter,
-            'format': '%(asctime)s | %(levelname)s | %(name)s | %(message)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S',  # Formato de fecha y hora
-        },
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'custom_format',  # Usa el formato personalizado
-        },
-        'papertrail': {
-            'level': 'INFO',
-            'class': 'logging.handlers.SysLogHandler',
-            'formatter': 'custom_format',  # Usa el formato personalizado para Papertrail
-            'address': (config('HOST_PAPERTRAIL'), int(config('PORT_PAPERTRAIL'))),
-        },
-    },
-    'root': {
-        'handlers': ['console', 'papertrail'],
-        'level': 'DEBUG',
-    },
-}
-
