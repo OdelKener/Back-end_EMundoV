@@ -1,28 +1,34 @@
+from .base import *
+
 DEBUG = True
+
+# ✅ AGREGAR ESTAS CONFIGURACIONES QUE FALTAN:
+ROOT_URLCONF = 'config.urls'
+WSGI_APPLICATION = 'config.wsgi.application'
 
 # ALLOWED_HOSTS - MÁS FLEXIBLE PARA NGROK
 ALLOWED_HOSTS = [
     '127.0.0.1', 
     'localhost',
     '.ngrok-free.app',
-    'afdd34068c0c.ngrok-free.app',
-    'localhost:8000',  # ← AGREGAR ESTO
+    '8134f7d94f85.ngrok-free.app',
+    'localhost:8000',
 ]
 
 # CSRF TRUSTED ORIGINS (ACTUALIZADO)
 CSRF_TRUSTED_ORIGINS = [
-    'https://afdd34068c0c.ngrok-free.app',
+    'https://8134f7d94f85.ngrok-free.app',
     'https://*.ngrok-free.app',
-    'http://localhost:8000',  # ← AGREGAR ESTO
-    'http://127.0.0.1:8000',  # ← AGREGAR ESTO
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
 ]
 
 # CORS CONFIGURATION (ACTUALIZADO)
 CORS_ALLOWED_ORIGINS = [
-    "https://afdd34068c0c.ngrok-free.app",
+    "https://8134f7d94f85.ngrok-free.app",
     "https://interfazweb-emundo-v.netlify.app",
-    "http://localhost:8000",  # ← AGREGAR ESTO
-    "http://127.0.0.1:8000",  # ← AGREGAR ESTO
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
